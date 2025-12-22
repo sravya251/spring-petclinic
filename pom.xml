@@ -32,6 +32,8 @@
 
         <dandelion.version>1.1.1</dandelion.version>
         <dandelion.datatables.version>1.1.0</dandelion.datatables.version>
+<properties>
+    <java.version>11</java.version> <!-- or 17 if your Jenkins tool is Java 17 -->
 
         <cobertura.version>2.7</cobertura.version>
     </properties>
@@ -221,14 +223,15 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
-            </plugin>
-                    <plugin>
-            <groupId>org.sonarsource.scanner.maven</groupId>
-            <artifactId>sonar-maven-plugin</artifactId>
-            <version>4.0.0.4121</version>
-        </plugin>
+            </plugin>  
 
         </plugins>
     </build>
+    <plugin>
+    <groupId>org.sonarsource.scanner.maven</groupId>
+    <artifactId>sonar-maven-plugin</artifactId>
+    <version>4.0.0.4121</version>
+</plugin>
+
 
 </project>
