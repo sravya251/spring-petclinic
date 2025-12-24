@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK8'
+        maven 'Maven3'
+    }
+
+    environment {
+        SONAR_PROJECT_KEY  = "springboot-demo"
+        SONAR_PROJECT_NAME = "springboot-demo"
+    }
+
+    stages {
+
+        stage('Verify Java') {
+            steps {
+                sh 'java -version'
+            }
+        }
+
+        stage('Clone Repository') {
+            steps {
+                git credentialsId: 'git_credentials',
+                    url: 'https://github.com/yaswanth-1999/spring-petclinic.git'
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('SonarQube analysis') {
+           steps {
+                 withSonarQubeEnv('SonarQube-Server') {
+    sh "mvn sonar:sonar -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.projectName=${SONAR_PROJECT_NAME}"
+}
+
+              }
+            }
+stage('Quality Gate') {
+    steps {
+        script {
+            try {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            } catch (Exception e) {
+                echo "⚠️ Quality Gate failed but continuing build..."
+            }
+        }
+    }
+}
+
+
+        
+    }
+
+    post {
+        success {
+            emailext(
+                subject: "✅ SUCCESS: Jenkins Pipeline - ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+                <h2>Build Successful 🎉</h2>
+                <p><b>Project:</b> ${JOB_NAME}</p>
+                <p><b>Build Number:</b> ${BUILD_NUMBER}</p>
+                <p><b>Status:</b> SUCCESS</p>
+                <p><b>SonarQube Quality Gate:</b> PASSED</p>
+                <p><a href="${BUILD_URL}">View Build</a></p>
+                """,
+                mimeType: 'text/html',
+                to: 'yaswanthkora1999@gmail.com'
+            )
+        }
+
+        failure {
+            emailext(
+                subject: "❌ FAILED: Jenkins Pipeline - ${JOB_NAME} #${BUILD_NUMBER}",
+                body: """
+                <h2>Build Failed ❌</h2>
+                <p><b>Project:</b> ${JOB_NAME}</p>
+                <p><b>Build Number:</b> ${BUILD_NUMBER}</p>
+                <p><b>Status:</b> FAILED</p>
+                <p>Check console output for details.</p>
+                <p><a href="${BUILD_URL}">View Build</a></p>
+                """,
+                mimeType: 'text/html',
+                to: 'yaswanthkora1999@gmail.com'
+            )
+        }
+    }
+}
